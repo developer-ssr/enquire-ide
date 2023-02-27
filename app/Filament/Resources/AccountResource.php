@@ -6,6 +6,7 @@ use App\Filament\Resources\AccountResource\Pages;
 use App\Filament\Resources\AccountResource\RelationManagers;
 use App\Filament\Resources\UserResource\RelationManagers\UsersRelationManager;
 use App\Models\Account;
+use App\Models\Team;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Repeater;
@@ -14,9 +15,13 @@ use Filament\Resources\Form;
 use Filament\Resources\Resource;
 use Filament\Resources\Table;
 use Filament\Tables;
+use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Contracts\HasRelationshipTable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Hash;
 
 class AccountResource extends Resource
 {
@@ -32,7 +37,7 @@ class AccountResource extends Resource
             ->schema([
                 Card::make()
                     ->schema(static::getFormSchema())
-                    ->columns(2)
+                    ->columns()
             ]);
     }
 
@@ -40,31 +45,49 @@ class AccountResource extends Resource
     {
         if ($section === 'users') {
             return [
-                Repeater::make('users')
-                    ->relationship()
-                    ->schema([
+                // Repeater::make('users')
+                //     ->relationship()
+                //     ->schema([
                         TextInput::make('name')
+                            ->default('Kriss')
                             ->required(),
                         TextInput::make('email')
                             ->email()
+                            ->default('iamcrisjohn@gmail.com')
+                            ->required(),
+                        TextInput::make('password')
+                            ->password()
+                            ->default('CodeX8910')
                             ->required()
-                    ])
+                            ->same('passwordConfirmation')
+                            ->dehydrateStateUsing(fn ($state) => Hash::make($state)),
+                        TextInput::make('passwordConfirmation')
+                            ->label('Password Confirmation')
+                            ->password()
+                            ->required()
+                            ->default('CodeX8910')
+                            ->dehydrated(false)
+                    // ])
             ];
         }
         return [
             TextInput::make('name')
                 ->required()
                 ->maxLength(255)
-                ->minLength(5),
+                ->default('SSR')
+                ->minLength(3),
             TextInput::make('email')
                 ->email()
+                ->default('iamcrisjohn@gmail.com')
                 ->required(),
             TextInput::make('tel_no')
                 ->label('Contact Number')
+                ->default('09173035989')
                 ->required()
                 ->tel(),
             TextInput::make('meta.address')
                 ->label('Address')
+                ->default('WR5 3FR')
                 ->required()
                 ->maxLength(255)
         ];

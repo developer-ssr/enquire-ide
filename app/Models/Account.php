@@ -13,6 +13,10 @@ class Account extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'meta' => 'array'
+    ];
+
 
     public function users(): HasMany
     {
@@ -22,5 +26,14 @@ class Account extends Model
     public function image(): MorphOne
     {
         return $this->morphOne(Image::class, 'imageable');
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function($account) {
+            $account->users()->delete();
+        });
     }
 }
