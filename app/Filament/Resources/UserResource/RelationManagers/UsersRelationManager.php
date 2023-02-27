@@ -31,7 +31,8 @@ class UsersRelationManager extends RelationManager
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name'),
+                Tables\Columns\TextColumn::make('name')->searchable(),
+                Tables\Columns\TextColumn::make('email')->searchable(),
             ])
             ->filters([
                 //
@@ -40,11 +41,14 @@ class UsersRelationManager extends RelationManager
                 Tables\Actions\CreateAction::make()
                     ->using(function (HasRelationshipTable $livewire, array $data): Model {
                         $model = $livewire->getRelationship()->create($data);
-                        $model->ownedTeams()->save(Team::forceCreate([
-                            'user_id' => $model->id,
-                            'name' => 'Workspace 1',
-                            'personal_team' => true,
-                        ]));
+                        if ($model->role !=='user') {
+                            $model->ownedTeams()->save(Team::forceCreate([
+                                'user_id' => $model->id,
+                                'name' => 'Workspace 1',
+                                'personal_team' => true,
+                                'account_id' => $livewire->ownerRecord->id
+                            ]));
+                        }
                         return $model;
                     })
             ])
@@ -55,5 +59,5 @@ class UsersRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
-    }    
+    }
 }

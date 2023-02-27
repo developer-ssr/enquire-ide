@@ -4,12 +4,17 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AccountResource\Pages;
 use App\Filament\Resources\AccountResource\RelationManagers;
+use App\Filament\Resources\TeamResource\RelationManagers\TeamsRelationManager;
 use App\Filament\Resources\UserResource\RelationManagers\UsersRelationManager;
 use App\Models\Account;
 use App\Models\Team;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Group;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Form;
 use Filament\Resources\Resource;
@@ -21,6 +26,7 @@ use Filament\Tables\Contracts\HasRelationshipTable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class AccountResource extends Resource
@@ -35,10 +41,32 @@ class AccountResource extends Resource
     {
         return $form
             ->schema([
+                Group::make()
+                    ->schema([
+                        Card::make()
+                            ->schema(static::getFormSchema())
+                            ->columns(2),
+                        // Forms\Components\Section::make('Account users')
+                        //     ->schema(static::getFormSchema('users'))
+                    ])
+                    ->columnSpan(['lg' => fn (?Account $record) => $record === null ? 3 : 2])
+                ,
                 Card::make()
-                    ->schema(static::getFormSchema())
-                    ->columns()
-            ]);
+                    ->schema([
+                        Placeholder::make('created_at')
+                            ->label('Created at')
+                            ->content(fn (Account $record): ?string => $record->created_at?->diffForHumans()),
+                        Placeholder::make('updated_at')
+                            ->label('Last modified')
+                            ->content(fn (Account $record): ?string => $record->updated_at?->diffForHumans()),
+                        Placeholder::make('license')
+                            ->label('License Valid Until')
+                            ->content(fn (Account $record): ?string => Carbon::make($record->meta['expires_at'])?->format('F j, Y'))
+                    ])
+                    ->columnSpan(['lg' => 1])
+                    ->hidden(fn (?Account $record) => $record === null)
+            ])
+            ->columns(3);
     }
 
     public static function getFormSchema(?string $section = null): array
@@ -66,7 +94,14 @@ class AccountResource extends Resource
                             ->password()
                             ->required()
                             ->default('CodeX8910')
-                            ->dehydrated(false)
+                            ->dehydrated(false),
+                        Select::make('role')
+                            ->label('Account Role')
+                            ->options([
+                                // 'super' => 'Super Administrator',
+                                'admin' => 'Administrator',
+                                'user' => 'Standard User'
+                            ])
                     // ])
             ];
         }
@@ -89,7 +124,12 @@ class AccountResource extends Resource
                 ->label('Address')
                 ->default('WR5 3FR')
                 ->required()
-                ->maxLength(255)
+                ->maxLength(255),
+            DatePicker::make('meta.expires_at')
+                ->label('License valid until')
+                ->required()
+                ->minDate(now())
+                ->default(now()->addYear())
         ];
     }
 
@@ -99,7 +139,15 @@ class AccountResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->searchable('name')
-                    ->sortable()
+                    ->sortable(),
+                TextColumn::make('email')
+                    ->label('Contact Email')
+                    ->sortable(),
+                TextColumn::make('tel_no')
+                    ->label('Contact No'),
+                TextColumn::make('meta.expires_at')
+                    ->date()
+                    ->label('Validity')
             ])
             ->filters([
                 //
@@ -116,6 +164,7 @@ class AccountResource extends Resource
     {
         return [
             UsersRelationManager::class,
+            TeamsRelationManager::class,
         ];
     }
     
@@ -126,5 +175,5 @@ class AccountResource extends Resource
             'create' => Pages\CreateAccount::route('/create'),
             'edit' => Pages\EditAccount::route('/{record}/edit'),
         ];
-    }    
+    }
 }

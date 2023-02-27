@@ -9,6 +9,7 @@ use Filament\Forms\Components\Wizard\Step;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\Concerns\HasWizard;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Contracts\HasRelationshipTable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;

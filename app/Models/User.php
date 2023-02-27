@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens;
     use HasFactory;
@@ -110,5 +111,10 @@ class User extends Authenticatable
     public function getIsSubscriptionValidAttribute()
     {
         return Carbon::now()->diffInSeconds($this->expired_at, false) > 0;
+    }
+
+    public function canAccessFilament(): bool
+    {
+        return $this->role === 'super';
     }
 }
